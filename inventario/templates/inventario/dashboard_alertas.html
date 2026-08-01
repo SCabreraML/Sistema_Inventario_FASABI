@@ -5,7 +5,7 @@
 {% block content %}
 <div class="mb-4">
     <h3>Dashboard de Alertas y Notificaciones</h3>
-    <p class="text-muted">Control preventivo de mantenimientos, niveles de stock y caducidad de insumos.</p>
+    <p class="text-muted">Control preventivo de mantenimientos, niveles de stock, caducidad de insumos y estado de solicitudes en tiempo real.</p>
 </div>
 
 <div class="row">
@@ -69,10 +69,10 @@
 
 <div class="row">
     <!-- Control de Caducidad -->
-    <div class="col-12">
+    <div class="col-md-8">
         <div class="card border-info mb-4">
             <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-hourglass-end me-2"></i> Control de Caducidad de Insumos (Próximos 30 Días)</h5>
+                <h5 class="mb-0"><i class="fas fa-hourglass-end me-2"></i> Control de Caducidad (Próximos 30 Días)</h5>
                 <span class="badge bg-white text-info">{{ proximos_caducados|length }}</span>
             </div>
             <div class="card-body">
@@ -83,9 +83,7 @@
                                 <th>Insumo</th>
                                 <th>Bodega</th>
                                 <th>Lote</th>
-                                <th>Cantidad</th>
-                                <th>Fecha de Caducidad</th>
-                                <th>Estado</th>
+                                <th>F. Caducidad</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -94,23 +92,61 @@
                                 <td><strong>{{ stock.insumo.nombre }}</strong></td>
                                 <td>{{ stock.bodega.nombre }}</td>
                                 <td>{{ stock.lote|default:"-" }}</td>
-                                <td>{{ stock.cantidad_actual }} {{ stock.insumo.unidad_medida }}</td>
-                                <td class="fw-bold {% if stock.fecha_caducidad <= today %}text-danger{% endif %}">
+                                <td class="fw-bold text-danger">
                                     {{ stock.fecha_caducidad|date:"d/m/Y" }}
-                                </td>
-                                <td>
-                                    <!-- Simple caducity badge -->
-                                    <span class="badge bg-danger">Próximo a caducar / Caducado</span>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center py-3 text-muted">No hay insumos perecederos próximos a caducar en los siguientes 30 días.</td>
+                                <td colspan="4" class="text-center py-4 text-muted">No hay insumos perecederos próximos a caducar.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solicitudes Recientes (Notificaciones) -->
+    <div class="col-md-4">
+        <div class="card border-primary mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white"><i class="fas fa-bell me-2"></i> Estado de Solicitudes</h5>
+                <span class="badge bg-white text-primary">{{ solicitudes_recientes|length }}</span>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for sol in solicitudes_recientes %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <a href="{% url 'solicitud_detail' sol.id %}" class="fw-bold mb-1">Solicitud #{{ sol.id }}</a>
+                            <small class="text-muted">{{ sol.fecha_solicitud|date:"d/m H:i" }}</small>
+                        </div>
+                        <p class="mb-1 text-muted small">Por: {{ sol.persona }}</p>
+
+                        <!-- Status indicator -->
+                        {% if sol.estado == 'Pendiente' %}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Pendiente</span>
+                        {% elif sol.estado == 'Aprobada' %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i> Aprobada</span>
+                        {% elif sol.estado == 'Rechazada' %}
+                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i> Rechazada</span>
+                        {% elif sol.estado == 'Comprada' %}
+                            <span class="badge bg-info text-dark"><i class="fas fa-shopping-cart me-1"></i> Comprada</span>
+                        {% elif sol.estado == 'Recibida' %}
+                            <span class="badge bg-secondary"><i class="fas fa-warehouse me-1"></i> Recibida</span>
+                        {% else %}
+                            <span class="badge bg-light text-dark">{{ sol.estado }}</span>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-center py-4 mb-0 text-muted">No hay solicitudes recientes registradas.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'solicitud_list' %}" class="btn btn-sm btn-outline-primary">Ver todas</a>
             </div>
         </div>
     </div>

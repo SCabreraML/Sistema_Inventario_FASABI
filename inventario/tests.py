@@ -193,13 +193,11 @@ class Sprint5Tests(TestCase):
         )
 
     def test_solicitud_creation_and_details_rendering(self):
-        # Create a Solicitud and inline DetalleSolicitud using the view
         data = {
             'carrera': self.carrera.id,
             'centro_costo': self.centro_costo.id,
             'persona': self.persona.id,
             'observacion': 'Solicitud urgente para el laboratorio',
-            # inline formset data (DetalleSolicitudFormSet)
             'detalles-TOTAL_FORMS': '1',
             'detalles-INITIAL_FORMS': '0',
             'detalles-MIN_NUM_FORMS': '0',
@@ -211,13 +209,11 @@ class Sprint5Tests(TestCase):
         response = self.client.post(reverse('solicitud_create'), data)
         self.assertEqual(response.status_code, 302)
 
-        # Verify Solicitud and DetalleSolicitud exist
         solicitud = Solicitud.objects.get(observacion='Solicitud urgente para el laboratorio')
         self.assertEqual(solicitud.estado, 'Pendiente')
         self.assertEqual(solicitud.detalles.count(), 1)
         self.assertEqual(solicitud.detalles.first().cantidad_solicitada, 50)
 
-        # Verify Detail page loads
         response = self.client.get(reverse('solicitud_detail', kwargs={'pk': solicitud.id}))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Pipetas de Pasteur')
@@ -230,13 +226,11 @@ class Sprint5Tests(TestCase):
             observacion='Flujo aprobación'
         )
 
-        # 1. Approve
         response = self.client.get(reverse('solicitud_approve', kwargs={'pk': sol.id}))
         self.assertEqual(response.status_code, 302)
         sol.refresh_from_db()
         self.assertEqual(sol.estado, 'Aprobada')
 
-        # 2. Reject
         response = self.client.get(reverse('solicitud_reject', kwargs={'pk': sol.id}))
         self.assertEqual(response.status_code, 302)
         sol.refresh_from_db()
@@ -250,7 +244,6 @@ class Sprint5Tests(TestCase):
             estado='Aprobada'
         )
 
-        # Create Compra linked to Solicitud
         response = self.client.post(reverse('compra_create'), {
             'solicitud': sol.id,
             'fecha_compra': '2025-05-15',
@@ -260,7 +253,6 @@ class Sprint5Tests(TestCase):
         })
         self.assertEqual(response.status_code, 302)
 
-        # Verify purchase and request status updated to 'Comprada'
         compra = Compra.objects.get(proveedor='Distribuidora Científica')
         self.assertEqual(compra.solicitud, sol)
 
@@ -287,24 +279,20 @@ class Sprint5Tests(TestCase):
             estado='Pendiente'
         )
 
-        # Receive merchandise in the Bodega
         response = self.client.post(reverse('compra_recibir', kwargs={'pk': compra.id}), {
             'bodega': self.bodega.id
         })
         self.assertEqual(response.status_code, 302)
 
-        # Check states updated to 'Recibida'
         compra.refresh_from_db()
         sol.refresh_from_db()
         self.assertEqual(compra.estado, 'Recibida')
         self.assertEqual(sol.estado, 'Recibida')
 
-        # Verify MovimientoInsumo (INGRESO) registered
         mov = MovimientoInsumo.objects.get(insumo=self.insumo, bodega=self.bodega)
         self.assertEqual(mov.tipo, 'INGRESO')
         self.assertEqual(mov.cantidad, 120)
 
-        # Verify stock updated
         stock = StockInsumo.objects.get(insumo=self.insumo, bodega=self.bodega)
         self.assertEqual(stock.cantidad_actual, 120)
 
@@ -313,3 +301,63 @@ class Sprint5Tests(TestCase):
         for url in urls:
             response = self.client.get(reverse(url))
             self.assertEqual(response.status_code, 200)
+
+
+class Sprint6Tests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(
+            username='admin_test',
+            password='password123',
+            email='admin@test.com'
+        )
+        self.client.login(username='admin_test', password='password123')
+
+        self.carrera = Carrera.objects.create(nombre="Medicina", codigo="MED001")
+        self.centro_costo = CentroCosto.objects.create(carrera=self.carrera, nombre="Lab Química", codigo="LQ01")
+        self.persona = Persona.objects.create(nombres="Juan", apellidos="Pérez", rol="TECNICO")
+        self.bodega = Bodega.objects.create(nombre="Bodega Insumos", tipo_bodega="Uso_Diario")
+
+        self.categoria = CategoriaInsumo.objects.create(nombre="Reactivos")
+        self.insumo = Insumo.objects.create(
+            categoria_insumo=self.categoria,
+            codigo="INS-101",
+            nombre="Pipetas de Pasteur",
+            unidad_medida="Unidades"
+        )
+
+    def test_reporte_stock_pdf_view(self):
+        # Create some stock entries
+        StockInsumo.objects.create(
+            insumo=self.insumo,
+            bodega=self.bodega,
+            cantidad_actual=100.0,
+            cantidad_minima=5.0
+        )
+
+        # Request the stock report as PDF
+        response = self.client.get(reverse('reporte_stock_pdf'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment; filename="reporte_stock.pdf"', response['Content-Disposition'])
+
+    def test_reporte_activos_pdf_view(self):
+        # Request the active assets report as PDF
+        response = self.client.get(reverse('reporte_activos_pdf'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment; filename="reporte_activos.pdf"', response['Content-Disposition'])
+
+    def test_dashboard_alertas_notifications(self):
+        # Create a Solicitud to be listed in the notification feed
+        sol = Solicitud.objects.create(
+            carrera=self.carrera,
+            centro_costo=self.centro_costo,
+            persona=self.persona,
+            observacion='Solicitud notificada'
+        )
+
+        # Load dashboard alerts and check if the solicitud and its state are present
+        response = self.client.get(reverse('dashboard_alertas'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Solicitud #')
+        self.assertContains(response, 'Pendiente')

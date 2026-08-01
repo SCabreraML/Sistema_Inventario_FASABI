@@ -79,4 +79,8 @@ urlpatterns = [
     path('insumos/compras/nuevo/', views.CompraCreateView.as_view(), name='compra_create'),
     path('insumos/compras/detalle/<int:pk>/', views.CompraDetailView.as_view(), name='compra_detail'),
     path('insumos/compras/recibir/<int:pk>/', views.compra_recibir, name='compra_recibir'),
+
+    # --- SPRINT 6 URLS ---
+    path('insumos/stock/pdf/', views.reporte_stock_pdf, name='reporte_stock_pdf'),
+    path('activos/reportes/pdf/', views.reporte_activos_pdf, name='reporte_activos_pdf'),
 ]
