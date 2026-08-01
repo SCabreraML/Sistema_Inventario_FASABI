@@ -2,18 +2,18 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import F
 
 from .models import (
     Carrera, CentroCosto, Bodega, ActivoFijo, CategoriaActivo, Mantenimiento, MovimientoActivo,
-    CategoriaInsumo, Insumo, StockInsumo, MovimientoInsumo
+    CategoriaInsumo, Insumo, StockInsumo, MovimientoInsumo, Solicitud, DetalleSolicitud, Compra, Persona
 )
 from .forms import (
     CarreraForm, CentroCostoForm, BodegaForm, ActivoFijoForm, CategoriaActivoForm, MantenimientoForm,
-    CategoriaInsumoForm, InsumoForm, StockInsumoForm, MovimientoInsumoForm
+    CategoriaInsumoForm, InsumoForm, StockInsumoForm, MovimientoInsumoForm, SolicitudForm, DetalleSolicitudFormSet, CompraForm
 )
 
 @login_required
@@ -356,3 +356,144 @@ class MovimientoInsumoCreateView(LoginRequiredMixin, SuccessMessageMixin, Create
     def form_valid(self, form):
         form.instance.usuario = self.request.user
         return super().form_valid(form)
+
+
+# --- SPRINT 5 VIEWS ---
+
+# Solicitudes
+class SolicitudListView(LoginRequiredMixin, ListView):
+    model = Solicitud
+    template_name = 'inventario/solicitud_list.html'
+    context_object_name = 'solicitudes'
+
+class SolicitudDetailView(LoginRequiredMixin, DetailView):
+    model = Solicitud
+    template_name = 'inventario/solicitud_detail.html'
+    context_object_name = 'solicitud'
+
+class SolicitudCreateView(LoginRequiredMixin, CreateView):
+    model = Solicitud
+    form_class = SolicitudForm
+    template_name = 'inventario/solicitud_form.html'
+    success_url = reverse_lazy('solicitud_list')
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        if self.request.POST:
+            data['detalles'] = DetalleSolicitudFormSet(self.request.POST)
+        else:
+            data['detalles'] = DetalleSolicitudFormSet()
+        data['title'] = "Crear Solicitud de Insumos"
+        return data
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        detalles = context['detalles']
+        self.object = form.save()
+        if detalles.is_valid():
+            detalles.instance = self.object
+            detalles.save()
+            messages.success(self.request, "Solicitud de insumos creada exitosamente.")
+            return redirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(form=form))
+
+# Solicitud approval and rejection
+@login_required
+def solicitud_approve(request, pk):
+    solicitud = get_object_or_404(Solicitud, pk=pk)
+    solicitud.estado = 'Aprobada'
+    solicitud.save()
+    messages.success(request, f"La solicitud {solicitud.id} ha sido aprobada.")
+    return redirect('solicitud_detail', pk=pk)
+
+@login_required
+def solicitud_reject(request, pk):
+    solicitud = get_object_or_404(Solicitud, pk=pk)
+    solicitud.estado = 'Rechazada'
+    solicitud.save()
+    messages.success(request, f"La solicitud {solicitud.id} ha sido rechazada.")
+    return redirect('solicitud_detail', pk=pk)
+
+# Compras
+class CompraListView(LoginRequiredMixin, ListView):
+    model = Compra
+    template_name = 'inventario/compra_list.html'
+    context_object_name = 'compras'
+
+class CompraDetailView(LoginRequiredMixin, DetailView):
+    model = Compra
+    template_name = 'inventario/compra_detail.html'
+    context_object_name = 'compra'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bodegas'] = Bodega.objects.all()
+        return context
+
+class CompraCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Compra
+    form_class = CompraForm
+    template_name = 'inventario/compra_form.html'
+    success_url = reverse_lazy('compra_list')
+    success_message = "Compra registrada exitosamente."
+
+    def get_initial(self):
+        initial = super().get_initial()
+        solicitud_id = self.request.GET.get('solicitud')
+        if solicitud_id:
+            solicitud = get_object_or_404(Solicitud, pk=solicitud_id)
+            initial['solicitud'] = solicitud
+            initial['estado'] = 'Pendiente'
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Registrar Compra"
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.object.solicitud:
+            sol = self.object.solicitud
+            sol.estado = 'Comprada'
+            sol.save()
+        return response
+
+# Reception of Merchandise (Intake registration)
+@login_required
+def compra_recibir(request, pk):
+    if request.method == 'POST':
+        compra = get_object_or_404(Compra, pk=pk)
+        bodega_id = request.POST.get('bodega')
+        if not bodega_id:
+            messages.error(request, "Debe seleccionar una bodega para registrar el ingreso.")
+            return redirect('compra_detail', pk=pk)
+
+        bodega = get_object_or_404(Bodega, pk=bodega_id)
+
+        # Update states
+        compra.estado = 'Recibida'
+        compra.save()
+
+        sol = compra.solicitud
+        if sol:
+            sol.estado = 'Recibida'
+            sol.save()
+
+            # Create MovimientoInsumo of type INGRESO for each item in the Request
+            for detalle in sol.detalles.all():
+                MovimientoInsumo.objects.create(
+                    insumo=detalle.insumo,
+                    bodega=bodega,
+                    tipo='INGRESO',
+                    cantidad=detalle.cantidad_solicitada,
+                    observacion=f"Ingreso automático por Compra #{compra.id} (Solicitud #{sol.id})",
+                    usuario=request.user
+                )
+            messages.success(request, f"¡Mercadería recibida con éxito en {bodega.nombre}! Se ha actualizado el stock de los insumos correspondientes.")
+        else:
+            messages.success(request, "La compra ha sido marcada como Recibida.")
+
+        return redirect('compra_detail', pk=pk)
+    return redirect('compra_list')

@@ -122,6 +122,49 @@ class StockInsumoForm(forms.ModelForm):
             'fecha_caducidad': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
+from django.forms import inlineformset_factory
+from .models import Solicitud, DetalleSolicitud, Compra
+
+class SolicitudForm(forms.ModelForm):
+    class Meta:
+        model = Solicitud
+        fields = ['carrera', 'centro_costo', 'persona', 'observacion']
+        widgets = {
+            'carrera': forms.Select(attrs={'class': 'form-select'}),
+            'centro_costo': forms.Select(attrs={'class': 'form-select'}),
+            'persona': forms.Select(attrs={'class': 'form-select'}),
+            'observacion': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class DetalleSolicitudForm(forms.ModelForm):
+    class Meta:
+        model = DetalleSolicitud
+        fields = ['insumo', 'cantidad_solicitada']
+        widgets = {
+            'insumo': forms.Select(attrs={'class': 'form-select'}),
+            'cantidad_solicitada': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
+
+DetalleSolicitudFormSet = inlineformset_factory(
+    Solicitud,
+    DetalleSolicitud,
+    form=DetalleSolicitudForm,
+    extra=3,
+    can_delete=True
+)
+
+class CompraForm(forms.ModelForm):
+    class Meta:
+        model = Compra
+        fields = ['solicitud', 'fecha_compra', 'proveedor', 'monto_total', 'estado']
+        widgets = {
+            'solicitud': forms.Select(attrs={'class': 'form-select'}),
+            'fecha_compra': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'proveedor': forms.TextInput(attrs={'class': 'form-control'}),
+            'monto_total': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'estado': forms.Select(attrs={'class': 'form-select'}),
+        }
+
 class MovimientoInsumoForm(forms.ModelForm):
     class Meta:
         model = MovimientoInsumo

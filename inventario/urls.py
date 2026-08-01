@@ -64,4 +64,19 @@ urlpatterns = [
     # Movimientos Insumos
     path('insumos/movimientos/', views.MovimientoInsumoListView.as_view(), name='movimiento_insumo_list'),
     path('insumos/movimientos/nuevo/', views.MovimientoInsumoCreateView.as_view(), name='movimiento_insumo_create'),
+
+    # --- SPRINT 5 URLS ---
+
+    # Solicitudes
+    path('insumos/solicitudes/', views.SolicitudListView.as_view(), name='solicitud_list'),
+    path('insumos/solicitudes/nuevo/', views.SolicitudCreateView.as_view(), name='solicitud_create'),
+    path('insumos/solicitudes/detalle/<int:pk>/', views.SolicitudDetailView.as_view(), name='solicitud_detail'),
+    path('insumos/solicitudes/aprobar/<int:pk>/', views.solicitud_approve, name='solicitud_approve'),
+    path('insumos/solicitudes/rechazar/<int:pk>/', views.solicitud_reject, name='solicitud_reject'),
+
+    # Compras
+    path('insumos/compras/', views.CompraListView.as_view(), name='compra_list'),
+    path('insumos/compras/nuevo/', views.CompraCreateView.as_view(), name='compra_create'),
+    path('insumos/compras/detalle/<int:pk>/', views.CompraDetailView.as_view(), name='compra_detail'),
+    path('insumos/compras/recibir/<int:pk>/', views.compra_recibir, name='compra_recibir'),
 ]
