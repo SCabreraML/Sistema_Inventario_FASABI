@@ -100,6 +100,17 @@
                             Mantenimientos
                         </a>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if 'insumos' in request.path %}active{% endif %}" href="#" id="insumosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Insumos
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="insumosDropdown">
+                            <li><a class="dropdown-item" href="{% url 'insumo_list' %}">Ver Insumos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'categoria_insumo_list' %}">Categorías de Insumos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'stock_insumo_list' %}">Gestión de Stock</a></li>
+                            <li><a class="dropdown-item" href="{% url 'movimiento_insumo_list' %}">Movimientos de Insumos</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link {% if 'dashboard' in request.path %}active{% endif %}" href="{% url 'dashboard_alertas' %}">
                             Alertas

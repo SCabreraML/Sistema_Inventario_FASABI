@@ -1,5 +1,5 @@
 from django import forms
-from .models import Carrera, CentroCosto, Bodega, ActivoFijo, Insumo, CategoriaActivo, CategoriaInsumo, Mantenimiento
+from .models import Carrera, CentroCosto, Bodega, ActivoFijo, Insumo, CategoriaActivo, CategoriaInsumo, Mantenimiento, StockInsumo, MovimientoActivo, MovimientoInsumo
 
 class CarreraForm(forms.ModelForm):
     class Meta:
@@ -85,3 +85,71 @@ class MantenimientoForm(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
+
+class CategoriaInsumoForm(forms.ModelForm):
+    class Meta:
+        model = CategoriaInsumo
+        fields = ['nombre', 'descripcion']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+class InsumoForm(forms.ModelForm):
+    class Meta:
+        model = Insumo
+        fields = ['categoria_insumo', 'codigo', 'nombre', 'descripcion', 'unidad_medida', 'es_perecedero', 'activo']
+        widgets = {
+            'categoria_insumo': forms.Select(attrs={'class': 'form-select'}),
+            'codigo': forms.TextInput(attrs={'class': 'form-control'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'unidad_medida': forms.TextInput(attrs={'class': 'form-control'}),
+            'es_perecedero': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+class StockInsumoForm(forms.ModelForm):
+    class Meta:
+        model = StockInsumo
+        fields = ['insumo', 'bodega', 'cantidad_actual', 'cantidad_minima', 'lote', 'fecha_caducidad']
+        widgets = {
+            'insumo': forms.Select(attrs={'class': 'form-select'}),
+            'bodega': forms.Select(attrs={'class': 'form-select'}),
+            'cantidad_actual': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'cantidad_minima': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'lote': forms.TextInput(attrs={'class': 'form-control'}),
+            'fecha_caducidad': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+class MovimientoInsumoForm(forms.ModelForm):
+    class Meta:
+        model = MovimientoInsumo
+        fields = ['insumo', 'bodega', 'tipo', 'cantidad', 'observacion']
+        widgets = {
+            'insumo': forms.Select(attrs={'class': 'form-select'}),
+            'bodega': forms.Select(attrs={'class': 'form-select'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'observacion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo = cleaned_data.get('tipo')
+        cantidad = cleaned_data.get('cantidad')
+        insumo = cleaned_data.get('insumo')
+        bodega = cleaned_data.get('bodega')
+
+        if tipo == 'EGRESO' and cantidad and insumo and bodega:
+            try:
+                stock = StockInsumo.objects.get(insumo=insumo, bodega=bodega)
+                if stock.cantidad_actual < cantidad:
+                    raise forms.ValidationError(
+                        f"Stock insuficiente en la bodega {bodega.nombre}. Stock actual: {stock.cantidad_actual}."
+                    )
+            except StockInsumo.DoesNotExist:
+                raise forms.ValidationError(
+                    f"No existe stock registrado para {insumo.nombre} en {bodega.nombre}."
+                )
+        return cleaned_data

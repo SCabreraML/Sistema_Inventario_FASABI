@@ -37,10 +37,31 @@ urlpatterns = [
     path('mantenimientos/', views.MantenimientoListView.as_view(), name='mantenimiento_list'),
     path('mantenimientos/nuevo/', views.MantenimientoCreateView.as_view(), name='mantenimiento_create'),
 
-    # Historial
+    # Historial Activos
     path('activos/historial/', views.MovimientoActivoListView.as_view(), name='movimiento_activo_list'),
 
     # Reportes y Alertas
     path('reportes/activos/', views.reportes_activos, name='reporte_activos'),
     path('dashboard/alertas/', views.dashboard_alertas, name='dashboard_alertas'),
+
+    # --- SPRINT 4 URLS ---
+
+    # Categorias Insumos
+    path('insumos/categorias/', views.CategoriaInsumoListView.as_view(), name='categoria_insumo_list'),
+    path('insumos/categorias/nuevo/', views.CategoriaInsumoCreateView.as_view(), name='categoria_insumo_create'),
+    path('insumos/categorias/editar/<int:pk>/', views.CategoriaInsumoUpdateView.as_view(), name='categoria_insumo_update'),
+
+    # Insumos
+    path('insumos/', views.InsumoListView.as_view(), name='insumo_list'),
+    path('insumos/nuevo/', views.InsumoCreateView.as_view(), name='insumo_create'),
+    path('insumos/editar/<int:pk>/', views.InsumoUpdateView.as_view(), name='insumo_update'),
+
+    # Stock Insumos
+    path('insumos/stock/', views.StockInsumoListView.as_view(), name='stock_insumo_list'),
+    path('insumos/stock/nuevo/', views.StockInsumoCreateView.as_view(), name='stock_insumo_create'),
+    path('insumos/stock/editar/<int:pk>/', views.StockInsumoUpdateView.as_view(), name='stock_insumo_update'),
+
+    # Movimientos Insumos
+    path('insumos/movimientos/', views.MovimientoInsumoListView.as_view(), name='movimiento_insumo_list'),
+    path('insumos/movimientos/nuevo/', views.MovimientoInsumoCreateView.as_view(), name='movimiento_insumo_create'),
 ]

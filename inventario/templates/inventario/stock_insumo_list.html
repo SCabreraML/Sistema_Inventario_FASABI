@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock de Insumos - Sistema de Inventario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Gestión de Stock por Bodega</h3>
+    <div>
+        <a href="{% url 'stock_insumo_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Registrar Nuevo Stock
+        </a>
+    </div>
+</div>
+
+<!-- Filtro de Bodega -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <label for="bodega-filter" class="form-label mb-0 fw-semibold">Filtrar por Bodega:</label>
+                <select name="bodega" id="bodega-filter" class="form-select mt-1" onchange="this.form.submit()">
+                    <option value="">-- Todas las Bodegas --</option>
+                    {% for bodega in bodegas %}
+                    <option value="{{ bodega.id }}" {% if selected_bodega == bodega.id|stringformat:"s" %}selected{% endif %}>
+                        {{ bodega.nombre }} ({{ bodega.tipo_bodega }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <a href="{% url 'stock_insumo_list' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Insumo</th>
+                        <th>Bodega</th>
+                        <th>Cantidad Actual</th>
+                        <th>Cantidad Mínima</th>
+                        <th>Estado de Stock</th>
+                        <th>Lote</th>
+                        <th>F. Caducidad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                    <tr>
+                        <td>
+                            <strong>{{ stock.insumo.nombre }}</strong><br>
+                            <small class="text-muted">Unidad: {{ stock.insumo.unidad_medida }} | Código: {{ stock.insumo.codigo|default:"-" }}</small>
+                        </td>
+                        <td>{{ stock.bodega.nombre }}</td>
+                        <td>{{ stock.cantidad_actual }}</td>
+                        <td>{{ stock.cantidad_minima }}</td>
+                        <td>
+                            {% if stock.cantidad_actual < stock.cantidad_minima %}
+                                <span class="badge bg-danger"><i class="fas fa-exclamation-circle me-1"></i> Stock Bajo</span>
+                            {% else %}
+                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Suficiente</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ stock.lote|default:"-" }}</td>
+                        <td>
+                            {% if stock.fecha_caducidad %}
+                                {{ stock.fecha_caducidad|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'stock_insumo_update' stock.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i> Ajustar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No hay stock registrado para los criterios seleccionados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

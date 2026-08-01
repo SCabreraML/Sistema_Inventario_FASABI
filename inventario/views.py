@@ -5,8 +5,16 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from .models import Carrera, CentroCosto, Bodega, ActivoFijo, CategoriaActivo, Mantenimiento, MovimientoActivo
-from .forms import CarreraForm, CentroCostoForm, BodegaForm, ActivoFijoForm, CategoriaActivoForm, MantenimientoForm
+from django.db.models import F
+
+from .models import (
+    Carrera, CentroCosto, Bodega, ActivoFijo, CategoriaActivo, Mantenimiento, MovimientoActivo,
+    CategoriaInsumo, Insumo, StockInsumo, MovimientoInsumo
+)
+from .forms import (
+    CarreraForm, CentroCostoForm, BodegaForm, ActivoFijoForm, CategoriaActivoForm, MantenimientoForm,
+    CategoriaInsumoForm, InsumoForm, StockInsumoForm, MovimientoInsumoForm
+)
 
 @login_required
 def inicio(request):
@@ -168,7 +176,7 @@ class MantenimientoCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateVie
         context['title'] = "Programar Mantenimiento"
         return context
 
-# Historial de Movimientos
+# Historial de Movimientos de Activos
 class MovimientoActivoListView(LoginRequiredMixin, ListView):
     model = MovimientoActivo
     template_name = 'inventario/movimiento_activo_list.html'
@@ -206,8 +214,145 @@ def dashboard_alertas(request):
         estado='Programado'
     )
 
-    # Alertas de stock bajo (se implementará en Sprint 4, pero dejamos la estructura)
+    # Alertas de stock bajo
+    stock_bajo = StockInsumo.objects.filter(cantidad_actual__lt=F('cantidad_minima'))
+
+    # Alertas de caducidad (próximos 30 días)
+    hoy = timezone.now().date()
+    proximos_caducados = StockInsumo.objects.filter(
+        insumo__es_perecedero=True,
+        fecha_caducidad__lte=hoy + timedelta(days=30)
+    ).order_by('fecha_caducidad')
 
     return render(request, 'inventario/dashboard_alertas.html', {
-        'mantenimientos': proximos_mantenimientos
+        'mantenimientos': proximos_mantenimientos,
+        'stock_bajo': stock_bajo,
+        'proximos_caducados': proximos_caducados,
     })
+
+# --- SPRINT 4 VIEWS ---
+
+# Categoria Insumo Views
+class CategoriaInsumoListView(LoginRequiredMixin, ListView):
+    model = CategoriaInsumo
+    template_name = 'inventario/categoria_insumo_list.html'
+    context_object_name = 'categorias'
+
+class CategoriaInsumoCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = CategoriaInsumo
+    form_class = CategoriaInsumoForm
+    template_name = 'inventario/form.html'
+    success_url = reverse_lazy('categoria_insumo_list')
+    success_message = "Categoría de Insumo creada exitosamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Crear Categoría de Insumo"
+        return context
+
+class CategoriaInsumoUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = CategoriaInsumo
+    form_class = CategoriaInsumoForm
+    template_name = 'inventario/form.html'
+    success_url = reverse_lazy('categoria_insumo_list')
+    success_message = "Categoría de Insumo actualizada exitosamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Editar Categoría de Insumo"
+        return context
+
+# Insumo Views
+class InsumoListView(LoginRequiredMixin, ListView):
+    model = Insumo
+    template_name = 'inventario/insumo_list.html'
+    context_object_name = 'insumos'
+
+class InsumoCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Insumo
+    form_class = InsumoForm
+    template_name = 'inventario/form.html'
+    success_url = reverse_lazy('insumo_list')
+    success_message = "Insumo registrado exitosamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Registrar Insumo"
+        return context
+
+class InsumoUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Insumo
+    form_class = InsumoForm
+    template_name = 'inventario/form.html'
+    success_url = reverse_lazy('insumo_list')
+    success_message = "Insumo actualizado exitosamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Editar Insumo"
+        return context
+
+# StockInsumo Views
+class StockInsumoListView(LoginRequiredMixin, ListView):
+    model = StockInsumo
+    template_name = 'inventario/stock_insumo_list.html'
+    context_object_name = 'stocks'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        bodega_id = self.request.GET.get('bodega')
+        if bodega_id:
+            queryset = queryset.filter(bodega_id=bodega_id)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bodegas'] = Bodega.objects.all()
+        context['selected_bodega'] = self.request.GET.get('bodega')
+        return context
+
+class StockInsumoCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = StockInsumo
+    form_class = StockInsumoForm
+    template_name = 'inventario/form.html'
+    success_url = reverse_lazy('stock_insumo_list')
+    success_message = "Stock registrado exitosamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Registrar Stock de Insumo"
+        return context
+
+class StockInsumoUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = StockInsumo
+    form_class = StockInsumoForm
+    template_name = 'inventario/form.html'
+    success_url = reverse_lazy('stock_insumo_list')
+    success_message = "Stock actualizado exitosamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Editar Stock de Insumo"
+        return context
+
+# MovimientoInsumo Views
+class MovimientoInsumoListView(LoginRequiredMixin, ListView):
+    model = MovimientoInsumo
+    template_name = 'inventario/movimiento_insumo_list.html'
+    context_object_name = 'movimientos'
+
+class MovimientoInsumoCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = MovimientoInsumo
+    form_class = MovimientoInsumoForm
+    template_name = 'inventario/form.html'
+    success_url = reverse_lazy('movimiento_insumo_list')
+    success_message = "Movimiento de Insumo registrado exitosamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Registrar Movimiento de Insumo"
+        return context
+
+    def form_valid(self, form):
+        form.instance.usuario = self.request.user
+        return super().form_valid(form)
