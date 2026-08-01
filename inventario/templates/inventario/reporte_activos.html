@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Activos{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3>Reporte de Activos Fijos</h3>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Carrera</label>
+                <select name="carrera" class="form-select">
+                    <option value="">Todas</option>
+                    {% for carrera in carreras %}
+                    <option value="{{ carrera.id }}" {% if request.GET.carrera == carrera.id|stringformat:"s" %}selected{% endif %}>{{ carrera.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Centro de Costo</label>
+                <select name="centro" class="form-select">
+                    <option value="">Todos</option>
+                    {% for centro in centros %}
+                    <option value="{{ centro.id }}" {% if request.GET.centro == centro.id|stringformat:"s" %}selected{% endif %}>{{ centro.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">Filtrar</button>
+                <a href="{% url 'reporte_activos' %}" class="btn btn-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Carrera</th>
+                        <th>Centro de Costo</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activo in activos %}
+                    <tr>
+                        <td>{{ activo.codigo_inventario }}</td>
+                        <td>{{ activo.nombre }}</td>
+                        <td>{{ activo.categoria_activo.nombre }}</td>
+                        <td>{{ activo.carrera.nombre }}</td>
+                        <td>{{ activo.centro_costo.nombre|default:"-" }}</td>
+                        <td>${{ activo.valor_adquisicion|default:"0.00" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">No se encontraron activos con los filtros seleccionados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

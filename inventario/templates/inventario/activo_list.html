@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Activos Fijos{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Gestión de Activos Fijos</h3>
+    <div>
+        <a href="{% url 'categoria_activo_list' %}" class="btn btn-outline-secondary me-2">
+            Categorías
+        </a>
+        <a href="{% url 'movimiento_activo_list' %}" class="btn btn-outline-info me-2">
+            Historial
+        </a>
+        <a href="{% url 'activo_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Nuevo Activo
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Carrera</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activo in activos %}
+                    <tr>
+                        <td>{{ activo.codigo_inventario|default:"-" }}</td>
+                        <td>{{ activo.nombre }}</td>
+                        <td>{{ activo.categoria_activo.nombre }}</td>
+                        <td>{{ activo.carrera.nombre }}</td>
+                        <td>
+                            <span class="badge {% if activo.estado == 'Operativo' %}bg-success{% else %}bg-warning{% endif %}">
+                                {{ activo.estado }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'activo_update' activo.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No hay activos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

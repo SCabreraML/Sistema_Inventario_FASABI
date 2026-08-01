@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard de Alertas{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h3>Dashboard de Alertas y Notificaciones</h3>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-wrench me-2"></i> Mantenimientos Próximos</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for mant in mantenimientos %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ mant.activo_fijo.nombre }}</h6>
+                            <small class="text-muted">{{ mant.fecha_programada|date:"d/m/Y" }}</small>
+                        </div>
+                        <p class="mb-1 text-muted small">{{ mant.tipo }}</p>
+                        <span class="badge bg-info">Programado</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-center py-3 mb-0">No hay mantenimientos programados para los próximos 7 días.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'mantenimiento_list' %}" class="btn btn-sm btn-outline-warning">Ver todos</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Stock Bajo (Próximamente)</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-center py-3 mb-0 text-muted">Este módulo se activará en el Sprint 4 (Gestión de Insumos).</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

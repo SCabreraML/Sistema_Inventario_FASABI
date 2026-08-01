@@ -1,0 +1,38 @@
+{% include 'inventario/inicio.html' %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3>Editar Transacción</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Producto</label>
+                    <select name="producto" class="form-select" required>
+                        {% for p in productos %}
+                            <option value="{{ p.pk }}" {% if p.pk == transaccion.producto.id %}selected{% endif %}>
+                                {{ p.nombre }} ({{ p.codigo }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tipo</label>
+                    <select name="tipo" class="form-select" required>
+                        <option value="INGRESO" {% if transaccion.tipo == 'INGRESO' %}selected{% endif %}>Ingreso</option>
+                        <option value="VENTA" {% if transaccion.tipo == 'VENTA' %}selected{% endif %}>Venta</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Cantidad</label>
+                    <input type="number" name="cantidad" class="form-control" value="{{ transaccion.cantidad }}" required>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'transaccion_list' %}" class="btn btn-secondary me-md-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

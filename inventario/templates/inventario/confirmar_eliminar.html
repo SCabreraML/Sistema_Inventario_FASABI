@@ -1,0 +1,22 @@
+{% include 'inventario/inicio.html' %}
+<div class="container mt-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h3>Confirmar Eliminación</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                ¿Estás seguro que deseas eliminar este {{ tipo }}?
+                <strong>{{ objeto }}</strong>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

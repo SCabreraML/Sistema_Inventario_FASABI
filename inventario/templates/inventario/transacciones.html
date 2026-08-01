@@ -1,0 +1,84 @@
+{% include 'inventario/inicio.html' %}
+<div class="container mt-5">
+    <h2>Transacciones</h2>
+
+    <!-- Búsqueda y ordenamiento -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <input type="text" name="buscar" class="form-control" placeholder="Buscar por producto, usuario o tipo" value="{{ request.GET.buscar }}">
+        </div>
+        <div class="col-md-3">
+            <select name="orden" class="form-select">
+                <option value="">-- Ordenar por --</option>
+                <option value="fecha" {% if request.GET.orden == 'fecha' %}selected{% endif %}>Fecha</option>
+                <option value="tipo" {% if request.GET.orden == 'tipo' %}selected{% endif %}>Tipo</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-primary">Buscar</button>
+        </div>
+    </form>
+
+    <!-- Tabla de transacciones -->
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Usuario</th>
+                <th>Tipo</th>
+                <th>Cantidad</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in transacciones %}
+                <tr>
+                    <td>{{ t.producto.nombre }}</td>
+                    <td>{{ t.usuario.username }}</td>
+                    <td>{{ t.get_tipo_display }}</td>
+                    <td>{{ t.cantidad }}</td>
+                    <td>{{ t.fecha|date:'d/m/Y H:i' }}</td>
+                    <td>
+                        {% if user.rol == 'ADMIN' or user.rol == 'CAJERO' %}
+                            <a href="{% url 'editar_transaccion' t.id %}" class="btn btn-sm btn-warning">Editar</a>
+                        {% endif %}
+                        {% if user.rol == 'ADMIN' %}
+                            <a href="{% url 'eliminar_transaccion' t.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="text-center">No hay transacciones para mostrar</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Formulario para nueva transacción -->
+    {% if user.rol == 'ADMIN' or user.rol == 'CAJERO' %}
+    <h4 class="mt-5">Registrar nueva transacción</h4>
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-3">
+            <select name="producto" class="form-select" required>
+                <option value="">-- Producto --</option>
+                {% for p in productos %}
+                    <option value="{{ p.pk }}">{{ p.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="tipo" class="form-select" required>
+                <option value="INGRESO">Ingreso</option>
+                <option value="VENTA">Venta</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="cantidad" class="form-control" placeholder="Cantidad" required min="1">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success">Guardar</button>
+        </div>
+    </form>
+    {% endif %}
+</div>

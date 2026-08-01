@@ -1,0 +1,33 @@
+{% include 'inventario/inicio.html' %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3>Editar Usuario</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Nombre de usuario</label>
+                    <input type="text" name="username" class="form-control" value="{{ usuario_editar.username }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" value="{{ usuario_editar.email }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Rol</label>
+                    <select name="rol" class="form-select" required>
+                        <option value="ADMIN" {% if usuario_editar.rol == 'ADMIN' %}selected{% endif %}>Administrador</option>
+                        <option value="CAJERO" {% if usuario_editar.rol == 'CAJERO' %}selected{% endif %}>Cajero</option>
+                        <option value="BODEGA" {% if usuario_editar.rol == 'BODEGA' %}selected{% endif %}>Bodeguero</option>
+                    </select>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'usuario_list' %}" class="btn btn-secondary me-md-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

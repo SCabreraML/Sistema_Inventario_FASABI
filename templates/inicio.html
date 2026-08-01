@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio - FASABI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>Bienvenido al Sistema Logístico FASABI</h2>
+        <p class="text-muted">Módulo de Inventarios - PUCE TEC</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-center p-4">
+            <div class="card-body">
+                <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Carreras</h5>
+                <p class="card-text">Gestión de carreras de la facultad.</p>
+                <a href="{% url 'carrera_list' %}" class="btn btn-primary">Ver Carreras</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center p-4">
+            <div class="card-body">
+                <i class="fas fa-building fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Centros de Costo</h5>
+                <p class="card-text">Departamentos y unidades de gasto.</p>
+                <a href="{% url 'centro_costo_list' %}" class="btn btn-success">Ver Centros</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center p-4">
+            <div class="card-body">
+                <i class="fas fa-warehouse fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">Bodegas</h5>
+                <p class="card-text">Control de almacenamiento.</p>
+                <a href="{% url 'bodega_list' %}" class="btn btn-warning">Ver Bodegas</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

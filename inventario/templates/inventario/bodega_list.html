@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Bodegas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Gestión de Bodegas</h3>
+    <a href="{% url 'bodega_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Nueva Bodega
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Ubicación</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bodega in bodegas %}
+                    <tr>
+                        <td>{{ bodega.nombre }}</td>
+                        <td>{{ bodega.get_tipo_bodega_display }}</td>
+                        <td>{{ bodega.ubicacion|default:"-" }}</td>
+                        <td>
+                            {% if bodega.activo %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'bodega_update' bodega.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">No hay bodegas registradas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
