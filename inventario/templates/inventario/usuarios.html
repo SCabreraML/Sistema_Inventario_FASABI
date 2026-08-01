@@ -1,6 +1,9 @@
-{% include 'inventario/inicio.html' %}
-<div class="container mt-5">
+{% extends 'base.html' %}
 
+{% block title %}Usuarios - Sistema de Inventario{% endblock %}
+
+{% block content %}
+<div class="mt-4">
     <h2>Usuarios</h2>
 
     <!-- Búsqueda y ordenamiento -->
@@ -21,59 +24,75 @@
     </form>
 
     <!-- Tabla con columna de acciones -->
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Usuario</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for u in usuarios %}
-                <tr>
-                    <td>{{ u.username }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.rol }}</td>
-                    <td>
-                        {% if user.rol == 'ADMIN' %}
-                            <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-warning">Editar</a>
-                        {% endif %}
-                        {% if user.rol == 'ADMIN' and u != user %}
-                            <a href="{% url 'eliminar_usuario' u.id %}" class="btn btn-sm btn-danger">Eliminar</a>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="4" class="text-center">No hay usuarios para mostrar</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                            <tr>
+                                <td>{{ u.username }}</td>
+                                <td>{{ u.email }}</td>
+                                <td>{{ u.rol }}</td>
+                                <td>
+                                    {% if user.rol == 'ADMIN' %}
+                                        <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-outline-warning">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                    {% endif %}
+                                    {% if user.rol == 'ADMIN' and u != user %}
+                                        <a href="{% url 'eliminar_usuario' u.id %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="text-center py-4 text-muted">No hay usuarios para mostrar</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <!-- Formulario de nuevo usuario (solo para ADMIN) -->
     {% if user.rol == 'ADMIN' %}
-    <h4 class="mt-5">Crear nuevo usuario</h4>
-    <form method="post" class="row g-3">
-        {% csrf_token %}
-        <div class="col-md-3">
-            <input type="text" name="username" class="form-control" placeholder="Usuario" required>
+    <div class="card mt-4">
+        <div class="card-header bg-white">
+            <h4 class="mb-0">Crear nuevo usuario</h4>
         </div>
-        <div class="col-md-3">
-            <input type="email" name="email" class="form-control" placeholder="Correo" required>
+        <div class="card-body">
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                <div class="col-md-3">
+                    <input type="text" name="username" class="form-control" placeholder="Usuario" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="email" name="email" class="form-control" placeholder="Correo" required>
+                </div>
+                <div class="col-md-3">
+                    <select name="rol" class="form-select" required>
+                        <option value="">-- Rol --</option>
+                        <option value="ADMIN">Administrador</option>
+                        <option value="CAJERO">Cajero</option>
+                        <option value="BODEGUERO">Bodeguero</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                </div>
+            </form>
         </div>
-        <div class="col-md-3">
-            <select name="rol" class="form-select" required>
-                <option value="">-- Rol --</option>
-                <option value="ADMIN">Administrador</option>
-                <option value="CAJERO">Cajero</option>
-                <option value="BODEGUERO">Bodeguero</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <button type="submit" class="btn btn-success">Guardar</button>
-        </div>
-    </form>
+    </div>
     {% endif %}
-
 </div>
+{% endblock %}

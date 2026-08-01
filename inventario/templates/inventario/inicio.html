@@ -1,239 +1,91 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="es">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Sistema de Inventario</title>
+{% block title %}Inicio - Sistema de Inventario{% endblock %}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block extra_css %}
+<style>
+    /* Hero */
+    .hero {
+        background: white;
+        border-radius: 15px;
+        margin-top: 50px;
+        padding: 60px;
+        box-shadow: 0 5px 20px rgba(0,0,0,.08);
+    }
 
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    .hero h1 {
+        color: #003B7A;
+        font-weight: 700;
+    }
 
-    <style>
+    .hero p {
+        color: #555;
+        font-size: 18px;
+    }
 
-        body{
-            background:#f4f6f9;
-            font-family:"Segoe UI",sans-serif;
-        }
+    /* Tarjetas */
+    .feature-card {
+        background: white;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,.08);
+        transition: .3s;
+        padding: 30px;
+    }
 
-        /* Barra superior */
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
 
-        .navbar{
-            background:#003B7A;
-            height:70px;
-        }
+    .feature-card i {
+        font-size: 45px;
+        color: #003B7A;
+    }
+</style>
+{% endblock %}
 
-        .navbar-brand{
-            font-weight:bold;
-            font-size:22px;
-        }
-
-        /* Hero */
-
-        .hero{
-            background:white;
-            border-radius:15px;
-            margin-top:50px;
-            padding:60px;
-            box-shadow:0 5px 20px rgba(0,0,0,.08);
-        }
-
-        .hero h1{
-            color:#003B7A;
-            font-weight:700;
-        }
-
-        .hero p{
-            color:#555;
-            font-size:18px;
-        }
-
-        /* Tarjetas */
-
-        .feature-card{
-            background:white;
-            border:none;
-            border-radius:15px;
-            box-shadow:0 3px 15px rgba(0,0,0,.08);
-            transition:.3s;
-            padding:30px;
-        }
-
-        .feature-card:hover{
-            transform:translateY(-5px);
-        }
-
-        .feature-card i{
-            font-size:45px;
-            color:#003B7A;
-        }
-
-        .btn-primary{
-            background:#003B7A;
-            border:none;
-        }
-
-        .btn-primary:hover{
-            background:#002f63;
-        }
-
-    </style>
-
-</head>
-
-<body>
-
-<nav class="navbar navbar-expand-lg navbar-dark shadow">
-
-    <div class="container">
-
-        <a class="navbar-brand" href="/">
-            <i class="bi bi-building"></i>
-            Sistema de Inventario
-        </a>
-
-        <button class="navbar-toggler" type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#navbarNav">
-
-            <span class="navbar-toggler-icon"></span>
-
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
-
-            <ul class="navbar-nav me-auto">
-
-                <li class="nav-item">
-    <a class="nav-link" href="{% url 'activo_list' %}">
-        Activos
+{% block content %}
+<div class="hero text-center">
+    <h1>Bienvenido al Sistema de Inventario</h1>
+    <p class="mt-3">
+        Plataforma para la gestión de productos, usuarios y movimientos de inventario.
+    </p>
+    {% if not user.is_authenticated %}
+    <a href="{% url 'login' %}" class="btn btn-primary btn-lg mt-3">
+        Ingresar al sistema
     </a>
-</li>
-
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'carrera_list' %}">
-        Carreras
-    </a>
-</li>
-
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'centro_costo_list' %}">
-        Centros de Costo
-    </a>
-</li>
-
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'bodega_list' %}">
-        Bodegas
-    </a>
-</li>
-
-<li class="nav-item">
-    <a class="nav-link" href="{% url 'mantenimiento_list' %}">
-        Mantenimientos
-    </a>
-</li>
-
-            </ul>
-
-            {% if user.is_authenticated %}
-
-                <span class="text-white me-3">
-                    <i class="bi bi-person-circle"></i>
-                    {{ user.username }}
-                </span>
-
-                <a href="{% url 'logout' %}" class="btn btn-light btn-sm">
-                    Cerrar sesión
-                </a>
-
-            {% else %}
-
-                <a href="{% url 'login' %}" class="btn btn-light">
-                    Iniciar sesión
-                </a>
-
-            {% endif %}
-
-        </div>
-
-    </div>
-
-</nav>
-
-<div class="container">
-
-    <div class="hero text-center">
-
-        <h1>Bienvenido al Sistema de Inventario</h1>
-
-        <p class="mt-3">
-            Plataforma para la gestión de productos, usuarios y movimientos de inventario.
-        </p>
-
-        <a href="{% url 'login' %}" class="btn btn-primary btn-lg mt-3">
-            Ingresar al sistema
-        </a>
-
-    </div>
-
-    <div class="row mt-5 g-4">
-
-        <div class="col-md-4">
-
-            <div class="feature-card text-center">
-
-                <i class="bi bi-box-seam"></i>
-
-                <h4 class="mt-3">Productos</h4>
-
-                <p>
-                    Administra el catálogo de productos del inventario.
-                </p>
-
-            </div>
-
-        </div>
-
-        <div class="col-md-4">
-
-            <div class="feature-card text-center">
-
-                <i class="bi bi-people"></i>
-
-                <h4 class="mt-3">Usuarios</h4>
-
-                <p>
-                    Gestiona usuarios y permisos del sistema.
-                </p>
-
-            </div>
-
-        </div>
-
-        <div class="col-md-4">
-
-            <div class="feature-card text-center">
-
-                <i class="bi bi-arrow-left-right"></i>
-
-                <h4 class="mt-3">Transacciones</h4>
-
-                <p>
-                    Controla entradas y salidas del inventario.
-                </p>
-
-            </div>
-
-        </div>
-
-    </div>
-
+    {% endif %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+<div class="row mt-5 g-4">
+    <div class="col-md-4">
+        <div class="feature-card text-center">
+            <i class="bi bi-box-seam"></i>
+            <h4 class="mt-3">Productos</h4>
+            <p>
+                Administra el catálogo de productos del inventario.
+            </p>
+        </div>
+    </div>
 
-</body>
-</html>
+    <div class="col-md-4">
+        <div class="feature-card text-center">
+            <i class="bi bi-people"></i>
+            <h4 class="mt-3">Usuarios</h4>
+            <p>
+                Gestiona usuarios y permisos del sistema.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="feature-card text-center">
+            <i class="bi bi-arrow-left-right"></i>
+            <h4 class="mt-3">Transacciones</h4>
+            <p>
+                Controla entradas y salidas del inventario.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
