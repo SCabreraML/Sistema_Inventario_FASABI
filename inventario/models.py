@@ -229,3 +229,37 @@ def track_asset_movement(sender, instance, **kwargs):
                 ubicacion_nueva=instance.ubicacion_actual,
                 observacion='Cambio automático de ubicación'
             )
+
+class MovimientoInsumo(models.Model):
+    TIPOS = (
+        ('INGRESO', 'Ingreso (Entrada)'),
+        ('EGRESO', 'Egreso (Salida)'),
+    )
+    insumo = models.ForeignKey(Insumo, on_delete=models.CASCADE, related_name='movimientos')
+    bodega = models.ForeignKey(Bodega, on_delete=models.CASCADE, related_name='movimientos_insumo')
+    tipo = models.CharField(max_length=20, choices=TIPOS)
+    cantidad = models.DecimalField(max_digits=12, decimal_places=2)
+    fecha = models.DateTimeField(auto_now_add=True)
+    observacion = models.TextField(blank=True, null=True)
+    usuario = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        db_table = 'movimientos_insumos'
+
+    def __str__(self):
+        return f"{self.tipo} - {self.insumo.nombre}: {self.cantidad}"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            stock, created = StockInsumo.objects.get_or_create(
+                insumo=self.insumo,
+                bodega=self.bodega,
+                defaults={'cantidad_actual': 0}
+            )
+            if self.tipo == 'INGRESO':
+                stock.cantidad_actual += self.cantidad
+            elif self.tipo == 'EGRESO':
+                stock.cantidad_actual -= self.cantidad
+            stock.save()

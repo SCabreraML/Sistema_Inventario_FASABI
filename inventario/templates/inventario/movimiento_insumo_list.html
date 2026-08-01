@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Movimientos de Insumos - Sistema de Inventario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Historial de Movimientos de Insumos</h3>
+    <div>
+        <a href="{% url 'movimiento_insumo_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Registrar Movimiento (Entrada/Salida)
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Insumo</th>
+                        <th>Bodega</th>
+                        <th>Tipo Movimiento</th>
+                        <th>Cantidad</th>
+                        <th>Registrado por</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in movimientos %}
+                    <tr>
+                        <td>{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <strong>{{ mov.insumo.nombre }}</strong><br>
+                            <small class="text-muted">Unidad: {{ mov.insumo.unidad_medida }} | Código: {{ mov.insumo.codigo|default:"-" }}</small>
+                        </td>
+                        <td>{{ mov.bodega.nombre }}</td>
+                        <td>
+                            {% if mov.tipo == 'INGRESO' %}
+                                <span class="badge bg-success"><i class="fas fa-arrow-down me-1"></i> Ingreso (Entrada)</span>
+                            {% elif mov.tipo == 'EGRESO' %}
+                                <span class="badge bg-danger"><i class="fas fa-arrow-up me-1"></i> Egreso (Salida)</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ mov.tipo }}</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ mov.cantidad }}</strong></td>
+                        <td>{{ mov.usuario.username|default:"Sistema" }}</td>
+                        <td>{{ mov.observacion|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No hay movimientos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

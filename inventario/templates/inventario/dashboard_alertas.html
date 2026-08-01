@@ -5,27 +5,30 @@
 {% block content %}
 <div class="mb-4">
     <h3>Dashboard de Alertas y Notificaciones</h3>
+    <p class="text-muted">Control preventivo de mantenimientos, niveles de stock, caducidad de insumos y estado de solicitudes en tiempo real.</p>
 </div>
 
 <div class="row">
+    <!-- Mantenimientos -->
     <div class="col-md-6">
         <div class="card border-warning mb-4">
-            <div class="card-header bg-warning text-dark">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-wrench me-2"></i> Mantenimientos Próximos</h5>
+                <span class="badge bg-dark">{{ mantenimientos|length }}</span>
             </div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
                     {% for mant in mantenimientos %}
-                    <div class="list-group-item">
+                    <div class="list-group-item px-0">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">{{ mant.activo_fijo.nombre }}</h6>
-                            <small class="text-muted">{{ mant.fecha_programada|date:"d/m/Y" }}</small>
+                            <small class="text-muted fw-bold">{{ mant.fecha_programada|date:"d/m/Y" }}</small>
                         </div>
-                        <p class="mb-1 text-muted small">{{ mant.tipo }}</p>
-                        <span class="badge bg-info">Programado</span>
+                        <p class="mb-1 text-muted small">{{ mant.tipo }} - {{ mant.persona }}</p>
+                        <span class="badge bg-warning text-dark">Programado</span>
                     </div>
                     {% empty %}
-                    <p class="text-center py-3 mb-0">No hay mantenimientos programados para los próximos 7 días.</p>
+                    <p class="text-center py-3 mb-0 text-muted">No hay mantenimientos programados para los próximos 7 días.</p>
                     {% endfor %}
                 </div>
             </div>
@@ -35,13 +38,115 @@
         </div>
     </div>
 
+    <!-- Stock Bajo -->
     <div class="col-md-6">
         <div class="card border-danger mb-4">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Stock Bajo (Próximamente)</h5>
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Insumos con Stock Bajo</h5>
+                <span class="badge bg-white text-danger">{{ stock_bajo|length }}</span>
             </div>
             <div class="card-body">
-                <p class="text-center py-3 mb-0 text-muted">Este módulo se activará en el Sprint 4 (Gestión de Insumos).</p>
+                <div class="list-group list-group-flush">
+                    {% for stock in stock_bajo %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ stock.insumo.nombre }}</h6>
+                            <span class="text-danger fw-bold small">Stock: {{ stock.cantidad_actual }} / Mín: {{ stock.cantidad_minima }}</span>
+                        </div>
+                        <p class="mb-1 text-muted small">Bodega: {{ stock.bodega.nombre }} | Unidad: {{ stock.insumo.unidad_medida }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-center py-3 mb-0 text-muted">Todos los insumos tienen niveles de stock suficientes.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'stock_insumo_list' %}" class="btn btn-sm btn-outline-danger">Gestionar Stock</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Control de Caducidad -->
+    <div class="col-md-8">
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-hourglass-end me-2"></i> Control de Caducidad (Próximos 30 Días)</h5>
+                <span class="badge bg-white text-info">{{ proximos_caducados|length }}</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Insumo</th>
+                                <th>Bodega</th>
+                                <th>Lote</th>
+                                <th>F. Caducidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in proximos_caducados %}
+                            <tr>
+                                <td><strong>{{ stock.insumo.nombre }}</strong></td>
+                                <td>{{ stock.bodega.nombre }}</td>
+                                <td>{{ stock.lote|default:"-" }}</td>
+                                <td class="fw-bold text-danger">
+                                    {{ stock.fecha_caducidad|date:"d/m/Y" }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">No hay insumos perecederos próximos a caducar.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solicitudes Recientes (Notificaciones) -->
+    <div class="col-md-4">
+        <div class="card border-primary mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white"><i class="fas fa-bell me-2"></i> Estado de Solicitudes</h5>
+                <span class="badge bg-white text-primary">{{ solicitudes_recientes|length }}</span>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for sol in solicitudes_recientes %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <a href="{% url 'solicitud_detail' sol.id %}" class="fw-bold mb-1">Solicitud #{{ sol.id }}</a>
+                            <small class="text-muted">{{ sol.fecha_solicitud|date:"d/m H:i" }}</small>
+                        </div>
+                        <p class="mb-1 text-muted small">Por: {{ sol.persona }}</p>
+
+                        <!-- Status indicator -->
+                        {% if sol.estado == 'Pendiente' %}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Pendiente</span>
+                        {% elif sol.estado == 'Aprobada' %}
+                            <span class="badge bg-success"><i class="fas fa-check me-1"></i> Aprobada</span>
+                        {% elif sol.estado == 'Rechazada' %}
+                            <span class="badge bg-danger"><i class="fas fa-times me-1"></i> Rechazada</span>
+                        {% elif sol.estado == 'Comprada' %}
+                            <span class="badge bg-info text-dark"><i class="fas fa-shopping-cart me-1"></i> Comprada</span>
+                        {% elif sol.estado == 'Recibida' %}
+                            <span class="badge bg-secondary"><i class="fas fa-warehouse me-1"></i> Recibida</span>
+                        {% else %}
+                            <span class="badge bg-light text-dark">{{ sol.estado }}</span>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-center py-4 mb-0 text-muted">No hay solicitudes recientes registradas.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'solicitud_list' %}" class="btn btn-sm btn-outline-primary">Ver todas</a>
             </div>
         </div>
     </div>

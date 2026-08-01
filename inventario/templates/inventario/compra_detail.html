@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Compra #{{ compra.id }} - Sistema de Inventario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3>Detalle de Registro de Compra #{{ compra.id }}</h3>
+    <div>
+        <a href="{% url 'compra_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Volver al Listado
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Purchase Info Card -->
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-primary">Información de la Compra</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <th class="ps-0 pt-0 text-muted">Fecha Compra:</th>
+                        <td class="pt-0 fw-semibold">{{ compra.fecha_compra|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 text-muted">Proveedor:</th>
+                        <td class="fw-semibold">{{ compra.proveedor|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 text-muted">Monto Total:</th>
+                        <td class="fw-semibold text-success">${{ compra.monto_total|default:"0.00" }}</td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 text-muted">Estado Recepción:</th>
+                        <td>
+                            {% if compra.estado == 'Pendiente' %}
+                                <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i> Pendiente (No Recibida)</span>
+                            {% elif compra.estado == 'Recibida' %}
+                                <span class="badge bg-success"><i class="fas fa-check-double me-1"></i> Recibida e Ingresada</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">{{ compra.estado }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="ps-0 pb-0 text-muted">Solicitud Asociada:</th>
+                        <td class="pb-0">
+                            {% if compra.solicitud %}
+                                <a href="{% url 'solicitud_detail' compra.solicitud.id %}" class="fw-semibold">
+                                    Solicitud #{{ compra.solicitud.id }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">Directa (Sin Solicitud)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Merchandise Reception Form -->
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0 text-white h6"><i class="fas fa-warehouse me-2"></i> Recepción de Mercadería</h5>
+            </div>
+            <div class="card-body">
+                {% if compra.estado == 'Pendiente' %}
+                    {% if compra.solicitud %}
+                        <p class="small text-muted">Al recibir la mercadería, los insumos de la solicitud se ingresarán automáticamente al stock de la bodega seleccionada.</p>
+                        <form method="post" action="{% url 'compra_recibir' compra.pk %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="bodega-select" class="form-label fw-semibold small">Bodega de Destino:</label>
+                                <select name="bodega" id="bodega-select" class="form-select" required>
+                                    <option value="">-- Seleccionar Bodega --</option>
+                                    {% for bodega in bodegas %}
+                                        <option value="{{ bodega.id }}">{{ bodega.nombre }} ({{ bodega.tipo_bodega }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check-double me-1"></i> Registrar Ingreso a Bodega
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'compra_recibir' compra.pk %}">
+                            {% csrf_token %}
+                            <p class="small text-muted">Esta es una compra directa sin solicitud asociada. Al recibirla, se marcará como completada.</p>
+                            <input type="hidden" name="bodega" value="direct_reception_placeholder">
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check me-1"></i> Marcar como Recibida
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-success mb-0 small">
+                        <i class="fas fa-check-circle me-1"></i> Esta compra ya ha sido completamente recibida e ingresada al stock de la bodega seleccionada.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Items details (if linked to request) -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-primary">Detalle de Artículos Comprados</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Insumo</th>
+                                <th>Código</th>
+                                <th>Unidad de Medida</th>
+                                <th class="text-end pe-4">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if compra.solicitud %}
+                                {% for detalle in compra.solicitud.detalles.all %}
+                                <tr>
+                                    <td class="ps-4"><strong>{{ detalle.insumo.nombre }}</strong></td>
+                                    <td>{{ detalle.insumo.codigo|default:"-" }}</td>
+                                    <td>{{ detalle.insumo.unidad_medida }}</td>
+                                    <td class="text-end pe-4"><strong>{{ detalle.cantidad_solicitada }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">Compra directa. No hay detalles de solicitud asociados.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
